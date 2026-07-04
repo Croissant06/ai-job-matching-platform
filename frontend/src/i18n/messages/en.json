@@ -1,0 +1,78 @@
+{
+  "appName": "JobMatch AI",
+  "tagline": "Jobs ranked for you, not just filtered",
+  "upload": {
+    "title": "Upload your CV",
+    "hint": "PDF, DOCX or TXT — the AI builds your profile from it. You can edit everything afterwards.",
+    "button": "Choose file",
+    "parsing": "Analyzing your CV with AI…",
+    "error": "Upload failed"
+  },
+  "profile": {
+    "title": "Your AI profile",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "skills": "Skills",
+    "roles": "Roles",
+    "languages": "Languages",
+    "experience": "years of experience",
+    "summary": "Summary",
+    "replaceCv": "Upload a new CV",
+    "editHint": "Comma-separated lists for skills, roles and languages"
+  },
+  "seniority": {
+    "intern": "Intern",
+    "junior": "Junior",
+    "mid": "Mid",
+    "senior": "Senior",
+    "management": "Management"
+  },
+  "workplace": {
+    "onsite": "On-site",
+    "hybrid": "Hybrid",
+    "remote": "Remote"
+  },
+  "employment": {
+    "full_time": "Full-time",
+    "part_time": "Part-time"
+  },
+  "filters": {
+    "title": "Filters",
+    "search": "Semantic search, e.g. “sales” also finds account managers…",
+    "country": "Country",
+    "city": "City",
+    "seniority": "Level",
+    "workplace": "Workplace",
+    "employmentType": "Employment",
+    "salaryMin": "Min salary (BGN)",
+    "any": "Any",
+    "apply": "Search",
+    "reset": "Reset"
+  },
+  "results": {
+    "title": "Your matches",
+    "count": "{n} matches",
+    "match": "match",
+    "empty": "No jobs match these filters — try relaxing them.",
+    "loading": "Ranking jobs against your profile…",
+    "breakdown": "Semantic {semantic}% · Skills {skills}% · Level {seniority}%"
+  },
+  "job": {
+    "explain": "Why this fits you",
+    "explaining": "The AI is analyzing the match…",
+    "missingSkills": "Skills you may be missing",
+    "noGaps": "No significant skill gaps detected",
+    "original": "View original ad",
+    "save": "Save",
+    "saved": "Saved",
+    "hide": "Hide",
+    "close": "Close",
+    "salary": "Salary",
+    "posted": "Posted"
+  },
+  "errors": {
+    "noBackend": "Cannot reach the backend at {url}. Is it running?",
+    "generic": "Something went wrong"
+  }
+}

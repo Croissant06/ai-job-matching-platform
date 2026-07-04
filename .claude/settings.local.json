@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(python --version)",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "PowerShell(docker --version)",
+      "PowerShell($s = Invoke-RestMethod \"http://localhost:8000/api/jobs/search?workplace=remote&limit=3\"; \"REMOTE ONLY:\"; $s.jobs | ForEach-Object { \"  $\\($_.score\\)% $\\($_.title\\) [$\\($_.workplace\\)]\" }; $s2 = Invoke-RestMethod \"http://localhost:8000/api/jobs/search?q=sales&limit=3\"; \"Q=sales:\"; $s2.jobs | ForEach-Object { \"  $\\($_.score\\)% $\\($_.title\\)\" }; $opts = Invoke-RestMethod \"http://localhost:8000/api/meta/options\"; \"CITIES: $\\($opts.cities -join ', '\\)\"; $job = $s.jobs[0]; $fb = Invoke-RestMethod -Method Post \"http://localhost:8000/api/feedback\" -ContentType \"application/json\" -Body \\(@{job_id=$job.id; event_type=\"hide\"} | ConvertTo-Json\\); \"FEEDBACK: $\\($fb.status\\)\"; $s3 = Invoke-RestMethod \"http://localhost:8000/api/jobs/search?workplace=remote&limit=3\"; \"AFTER HIDE \\(should not contain '$\\($job.title\\)'\\):\"; $s3.jobs | ForEach-Object { \"  $\\($_.title\\)\" })"
+    ]
+  }
+}
