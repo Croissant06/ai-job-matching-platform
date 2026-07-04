@@ -16,6 +16,9 @@ out/
 .env
 .env.local
 
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json
+
 # OS / editor
 .DS_Store
 Thumbs.db
