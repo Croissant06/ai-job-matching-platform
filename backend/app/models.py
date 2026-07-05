@@ -49,7 +49,29 @@ class Job(Base):
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
+    # Ingestion bookkeeping: dedupe fingerprint + freshness for stale expiry.
+    content_hash: Mapped[str | None] = mapped_column(String(40), index=True)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
     embedding: Mapped[list] = mapped_column(Vector(EMBED_DIM))
+
+
+class SourcePosting(Base):
+    """One appearance of a canonical job on one source. The same ad seen on
+    several sites becomes one Job with multiple SourcePostings, preserving
+    every original link (spec §3.2 deduplication)."""
+
+    __tablename__ = "source_postings"
+    __table_args__ = (UniqueConstraint("source", "external_id", name="uq_source_posting"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    job_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("jobs.id", ondelete="CASCADE"), index=True)
+    source: Mapped[str] = mapped_column(String(50), index=True)
+    external_id: Mapped[str] = mapped_column(String(200))
+    url: Mapped[str | None] = mapped_column(String(500))
+    posted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
 class CandidateProfile(Base):

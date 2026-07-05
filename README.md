@@ -46,6 +46,26 @@ Without any API keys the app still works end to end using the seeded demo profil
 5. **Canonical job model** — `jobs` is the deduped canonical entity; the ingestion pipeline (aggregator APIs + scrapers) will add per-source postings under it.
 6. **Modular monolith** — one FastAPI app + (future) scheduled ingestion job. No queues/Celery until volume demands it.
 
+## Ingestion (real job ads)
+
+```powershell
+cd backend
+.venv\Scripts\python -m scripts.ingest                       # all configured sources
+.venv\Scripts\python -m scripts.ingest --source zaplata.bg --limit 100
+```
+
+Pipeline: **fetch → normalize → dedupe → embed → upsert → expire** ([app/ingestion](backend/app/ingestion)). Each source is an isolated connector; one breaking doesn't affect the others. Idempotent — re-runs refresh known ads and merge duplicates instead of duplicating; ads gone from all sources deactivate after `INGEST_STALE_DAYS`.
+
+| Source | Type | Setup |
+|---|---|---|
+| zaplata.bg | Own scraper via published sitemap (robots-compliant: `/search/` never touched), rate-limited, honest UA | none — works out of the box |
+| Jooble (BG, RO) | Aggregator API | free key: https://jooble.org/api/about → `JOOBLE_API_KEY` |
+| Adzuna (international) | Aggregator API — no BG/RO coverage | free key: https://developer.adzuna.com/ → `ADZUNA_APP_ID/KEY` |
+
+**jobs.bg is deliberately not scraped** — it serves HTTP 403 to non-browser clients (active anti-bot protection); bypassing that is the legal/technical risk the spec (§3) says to avoid. Some of its inventory arrives via Jooble.
+
+Scheduling (spec: every 2 days): run `scripts.ingest` from Windows Task Scheduler / cron; it's safe to run repeatedly.
+
 ## Notes
 
 - Schema changes are currently applied with `python -m scripts.seed_jobs --reset --demo-profile` (drops and recreates all tables). Alembic migrations come with real deployment.
@@ -53,8 +73,7 @@ Without any API keys the app still works end to end using the seeded demo profil
 
 ## What's next (from the agreed plan)
 
-1. Real ingestion: Jooble/Adzuna API connectors + jobs.bg/zaplata.bg scrapers → normalize → dedupe → embed (replaces `scripts/seed_jobs.py`).
-2. Auth (managed provider) + per-user profiles; GDPR deletion/export.
-3. Email alerts driven by saved searches (evaluated after each ingestion run) + the Alerts settings page.
-4. ESCO skill taxonomy mapping for structured, language-independent gap analysis.
-5. Romanian locale, mobile (React Native/Expo), monetization gating (freemium vs trial — decision deferred).
+1. Auth (managed provider) + per-user profiles; GDPR deletion/export.
+2. Email alerts driven by saved searches (evaluated after each ingestion run) + the Alerts settings page.
+3. ESCO skill taxonomy mapping for structured, language-independent gap analysis.
+4. Romanian locale, mobile (React Native/Expo), monetization gating (freemium vs trial — decision deferred).
