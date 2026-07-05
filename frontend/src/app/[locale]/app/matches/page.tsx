@@ -5,7 +5,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useApp } from "@/components/AppShell";
 import FilterPanel from "@/components/FilterPanel";
 import JobCard from "@/components/JobCard";
-import { Card, Spinner } from "@/components/ui";
+import { Card, JobCardSkeleton } from "@/components/ui";
 import { api, FilterOptions, JobMatch, SearchParams, paramsToSavedFilters } from "@/lib/api";
 
 function paramsFromUrl(sp: URLSearchParams): SearchParams {
@@ -113,7 +113,13 @@ function MatchesContent() {
             {jobs === null ? t("results.loading") : t("results.count", { n: jobs.length })}
           </p>
           <div className="space-y-3">
-            {jobs === null && <Spinner />}
+            {jobs === null && (
+              <>
+                <JobCardSkeleton />
+                <JobCardSkeleton />
+                <JobCardSkeleton />
+              </>
+            )}
             {jobs?.length === 0 && (
               <Card className="p-10 text-center">
                 <p className="font-semibold text-slate-700">{t("results.empty")}</p>

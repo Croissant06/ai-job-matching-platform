@@ -4,8 +4,8 @@ Usage (from backend/):
     python -m scripts.seed_jobs                    # jobs only
     python -m scripts.seed_jobs --demo-profile     # + demo candidate, so search works
                                                    #   without uploading a CV / API keys
-    python -m scripts.seed_jobs --reset            # DROP all tables first (schema changes;
-                                                   #   stands in for migrations at this stage)
+    python -m scripts.seed_jobs --reset            # dev-only: wipe everything and rebuild
+                                                   #   from Alembic migrations, then seed
 
 In the real product this script's role is taken by the ingestion pipeline
 (aggregator API connectors + scrapers -> normalize -> dedupe -> embed -> upsert).
@@ -19,6 +19,7 @@ from pathlib import Path
 from sqlalchemy import delete
 
 from app.db import SessionLocal, init_db
+from app.ingestion.normalize import to_eur
 from app.models import CandidateProfile, Job
 from app.services.embeddings import embed_texts, job_embedding_text, profile_embedding_text
 
@@ -48,12 +49,12 @@ DEMO_PROFILE = {
 
 def seed(with_demo_profile: bool, reset: bool = False) -> None:
     if reset:
-        from app.db import Base, engine
-        from app import models  # noqa: F401
+        from app.db import reset_database
 
-        print("Dropping all tables...")
-        Base.metadata.drop_all(bind=engine)
-    init_db()
+        print("Dropping schema and rebuilding from migrations...")
+        reset_database()
+    else:
+        init_db()
     now = datetime.now(timezone.utc)
     raw = json.loads(DATA_FILE.read_text(encoding="utf-8"))
 
@@ -69,6 +70,8 @@ def seed(with_demo_profile: bool, reset: bool = False) -> None:
                 Job(
                     **item,
                     source="seed",
+                    salary_min_eur=to_eur(item.get("salary_min"), item.get("salary_currency")),
+                    salary_max_eur=to_eur(item.get("salary_max"), item.get("salary_currency")),
                     posted_at=now - timedelta(days=posted_days),
                     expires_at=now + timedelta(days=30),
                     embedding=vec,

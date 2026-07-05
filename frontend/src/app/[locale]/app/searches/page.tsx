@@ -85,7 +85,7 @@ export default function SavedSearchesPage() {
                   )}
                 </div>
                 <p className="mt-1 text-sm text-slate-500">{filterSummary(t, search)}</p>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-slate-500">
                   {t("searches.lastChecked")}:{" "}
                   {new Date(search.last_checked_at).toLocaleDateString(locale)}
                 </p>
@@ -93,12 +93,15 @@ export default function SavedSearchesPage() {
               <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs text-slate-500">
                 <span>
                   {t("searches.alerts")}{" "}
-                  <span className="rounded bg-slate-100 px-1 py-0.5 text-[10px] font-medium text-slate-400">
+                  <span className="rounded bg-slate-100 px-1 py-0.5 text-[10px] font-medium text-slate-500">
                     {t("searches.alertsSoon")}
                   </span>
                 </span>
                 <button
                   onClick={() => toggleAlerts(search)}
+                  role="switch"
+                  aria-checked={search.alerts_enabled}
+                  aria-label={`${t("searches.alerts")}: ${search.name}`}
                   className={`relative h-5 w-9 rounded-full transition ${
                     search.alerts_enabled ? "bg-indigo-600" : "bg-slate-300"
                   }`}

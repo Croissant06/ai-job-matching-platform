@@ -106,14 +106,14 @@ export default function AppShell({
             ))}
           </nav>
           <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4">
-            <span className="truncate text-xs text-slate-400">{profile.full_name}</span>
+            <span className="truncate text-xs text-slate-500">{profile.full_name}</span>
             <div className="flex gap-1">
               {LOCALES.map((loc) => (
                 <Link
                   key={loc}
                   href={switchLocalePath(loc)}
                   className={`rounded-md px-2 py-0.5 text-xs font-semibold ${
-                    loc === locale ? "bg-indigo-600 text-white" : "text-slate-400 hover:bg-slate-100"
+                    loc === locale ? "bg-indigo-600 text-white" : "text-slate-500 hover:bg-slate-100"
                   }`}
                 >
                   {loc.toUpperCase()}
@@ -133,8 +133,8 @@ export default function AppShell({
               <Link
                 key={loc}
                 href={switchLocalePath(loc)}
-                className={`rounded-md px-2 py-0.5 text-xs font-semibold ${
-                  loc === locale ? "bg-indigo-600 text-white" : "text-slate-400"
+                className={`rounded-md px-3 py-2 text-xs font-semibold ${
+                  loc === locale ? "bg-indigo-600 text-white" : "text-slate-500"
                 }`}
               >
                 {loc.toUpperCase()}

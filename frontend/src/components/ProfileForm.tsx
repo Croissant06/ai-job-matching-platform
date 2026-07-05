@@ -29,7 +29,7 @@ export function ChipSelect({
     onChange(values.includes(value) ? values.filter((v) => v !== value) : [...values, value]);
   return (
     <div>
-      {label && <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-400">{label}</p>}
+      {label && <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>}
       <div className="flex flex-wrap gap-1.5">
         {options.map((opt) => (
           <button
@@ -107,7 +107,7 @@ export default function ProfileForm({
     });
 
   const field = "w-full rounded-xl border border-slate-300 px-3 py-2 text-sm";
-  const label = "mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400";
+  const label = "mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500";
 
   return (
     <div className="space-y-4">
@@ -212,7 +212,7 @@ export default function ProfileForm({
         {t("profile.relocation")}
       </label>
 
-      <p className="text-xs text-slate-400">{t("profile.editHint")}</p>
+      <p className="text-xs text-slate-500">{t("profile.editHint")}</p>
 
       <div className="flex gap-2 pt-1">
         <button

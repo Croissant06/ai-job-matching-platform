@@ -26,7 +26,7 @@ export default function FilterPanel({
   const set = (patch: Partial<SearchParams>) => onChange({ ...filters, ...patch });
 
   const field = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm";
-  const label = "mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400";
+  const label = "mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500";
 
   const selects: {
     key: keyof SearchParams;

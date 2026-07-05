@@ -28,6 +28,7 @@ from bs4 import BeautifulSoup
 
 from app.config import get_settings
 from app.ingestion.base import RawJob
+from app.ingestion.http import get_with_retry
 from app.ingestion.normalize import parse_salary
 
 logger = logging.getLogger("ingestion.zaplata")
@@ -73,14 +74,14 @@ class ZaplataConnector:
 
     def _ad_urls(self, client: httpx.Client) -> Iterator[tuple[str, str, str]]:
         """Yields (url, external_id, city_slug) from the ads sitemaps."""
-        index = ElementTree.fromstring(client.get(SITEMAP_INDEX).content)
+        index = ElementTree.fromstring(get_with_retry(client, SITEMAP_INDEX).content)
         ad_sitemaps = [
             loc.text
             for loc in index.iter(f"{_SITEMAP_NS}loc")
             if loc.text and "sitemap-ads" in loc.text
         ]
         for sitemap_url in ad_sitemaps:
-            sitemap = ElementTree.fromstring(client.get(sitemap_url).content)
+            sitemap = ElementTree.fromstring(get_with_retry(client, sitemap_url).content)
             for loc in sitemap.iter(f"{_SITEMAP_NS}loc"):
                 if not loc.text:
                     continue
@@ -152,10 +153,7 @@ class ZaplataConnector:
                     continue  # keep scanning the sitemap for known ids only
                 time.sleep(delay)
                 try:
-                    resp = client.get(url)
-                    if resp.status_code != 200:
-                        logger.warning("skipping %s (HTTP %s)", url, resp.status_code)
-                        continue
+                    resp = get_with_retry(client, url)
                     raw = self._parse_ad(resp.text, url, external_id, city_slug)
                 except httpx.HTTPError as exc:
                     logger.warning("skipping %s (%s)", url, exc)

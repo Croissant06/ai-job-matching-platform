@@ -75,7 +75,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
           <div className="glass relative rounded-[28px] border border-slate-200 p-6 shadow-soft">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   {t("dashboard.bestMatch")}
                 </p>
                 <h3 className="mt-1 text-lg font-bold">Junior Data Analyst</h3>
@@ -170,7 +170,7 @@ export default async function LandingPage({ params }: { params: Promise<{ locale
         </Link>
       </section>
 
-      <footer className="border-t border-slate-100 py-8 text-center text-xs text-slate-400">
+      <footer className="border-t border-slate-100 py-8 text-center text-xs text-slate-500">
         {t("landing.footer")}
       </footer>
     </div>

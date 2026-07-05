@@ -64,7 +64,7 @@ export function SkillChips({
         </span>
       ))}
       {limit && skills.length > limit && (
-        <span className="px-1 text-xs text-slate-400">+{skills.length - limit}</span>
+        <span className="px-1 text-xs text-slate-500">+{skills.length - limit}</span>
       )}
     </div>
   );
@@ -133,6 +133,32 @@ export function Card({
   return (
     <div className={`rounded-[22px] border border-slate-200 bg-white shadow-soft-sm ${className}`}>
       {children}
+    </div>
+  );
+}
+
+export function JobCardSkeleton() {
+  return (
+    <div className="animate-pulse rounded-[22px] border border-slate-200 bg-white p-5 shadow-soft-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 space-y-2">
+          <div className="h-4 w-2/5 rounded bg-slate-200" />
+          <div className="h-3 w-3/5 rounded bg-slate-100" />
+          <div className="h-3 w-1/3 rounded bg-slate-100" />
+        </div>
+        <div className="h-7 w-24 rounded-full bg-slate-200" />
+      </div>
+      <div className="mt-4 h-3 w-4/5 rounded bg-slate-100" />
+      <div className="mt-2 flex gap-1.5">
+        <div className="h-5 w-16 rounded-full bg-slate-100" />
+        <div className="h-5 w-20 rounded-full bg-slate-100" />
+        <div className="h-5 w-14 rounded-full bg-slate-100" />
+      </div>
+      <div className="mt-4 flex gap-2 border-t border-slate-100 pt-3">
+        <div className="h-8 w-24 rounded-lg bg-slate-200" />
+        <div className="h-8 w-16 rounded-lg bg-slate-100" />
+        <div className="h-8 w-16 rounded-lg bg-slate-100" />
+      </div>
     </div>
   );
 }

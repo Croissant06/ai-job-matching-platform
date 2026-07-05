@@ -22,7 +22,7 @@ export default function ProfilePage() {
     }
   };
 
-  const sectionLabel = "text-xs font-semibold uppercase tracking-wide text-slate-400";
+  const sectionLabel = "text-xs font-semibold uppercase tracking-wide text-slate-500";
 
   const locations = [
     ...(profile.preferred_cities.length ? profile.preferred_cities : [profile.city].filter(Boolean)),
@@ -98,7 +98,7 @@ export default function ProfilePage() {
               {profile.roles.length ? (
                 <SkillChips skills={profile.roles} tone="brand" />
               ) : (
-                <p className="text-sm text-slate-400">{t("profile.notSet")}</p>
+                <p className="text-sm text-slate-500">{t("profile.notSet")}</p>
               )}
             </div>
           </Card>
@@ -108,7 +108,7 @@ export default function ProfilePage() {
             <p className="mt-2 text-sm font-medium text-slate-700">
               {profile.seniority ? t(`seniority.${profile.seniority}`) : t("profile.notSet")}
               {profile.target_seniorities.length > 0 && (
-                <span className="text-slate-400">
+                <span className="text-slate-500">
                   {" "}
                   → {profile.target_seniorities.map((s) => t(`seniority.${s}`)).join(", ")}
                 </span>
@@ -122,7 +122,7 @@ export default function ProfilePage() {
               {profile.skills.length ? (
                 <SkillChips skills={profile.skills} />
               ) : (
-                <p className="text-sm text-slate-400">{t("profile.notSet")}</p>
+                <p className="text-sm text-slate-500">{t("profile.notSet")}</p>
               )}
             </div>
           </Card>

@@ -97,7 +97,9 @@ Scheduling (spec: every 2 days): run `scripts.ingest` from Windows Task Schedule
 
 ## Notes
 
-- Schema changes are currently applied with `python -m scripts.seed_jobs --reset --demo-profile` (drops and recreates all tables). Alembic migrations come with real deployment.
+- **Schema changes ship as Alembic migrations.** After pulling new code: `.venv\Scripts\alembic upgrade head` (from `backend/`) — the API also applies pending migrations automatically on startup. `scripts.seed_jobs --reset` remains as a dev-only full wipe.
+- Tests: `.venv\Scripts\python -m pytest tests` (from `backend/`) — covers salary parsing, currency conversion, city/language normalization and dedupe fingerprints.
+- Salaries are stored as published (amount + currency) plus an EUR-normalized copy used for filtering and match scoring, so BGN/GBP/RON sources compare correctly.
 - Saved searches store an `alerts_enabled` flag; email delivery wires in once the ingestion pipeline runs on a schedule (the Alerts settings page is intentionally deferred until then).
 
 ## What's next (from the agreed plan)
