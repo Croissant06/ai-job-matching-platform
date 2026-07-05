@@ -4,6 +4,8 @@ Usage (from backend/):
     python -m scripts.seed_jobs                    # jobs only
     python -m scripts.seed_jobs --demo-profile     # + demo candidate, so search works
                                                    #   without uploading a CV / API keys
+    python -m scripts.seed_jobs --reset            # DROP all tables first (schema changes;
+                                                   #   stands in for migrations at this stage)
 
 In the real product this script's role is taken by the ingestion pipeline
 (aggregator API connectors + scrapers -> normalize -> dedupe -> embed -> upsert).
@@ -34,10 +36,23 @@ DEMO_PROFILE = {
     "languages": ["Bulgarian", "English"],
     "summary": "Backend developer with 4 years of experience building web services "
     "with Python and PostgreSQL, looking for a mid or senior role in Sofia or remote.",
+    "preferred_countries": ["BG"],
+    "preferred_cities": ["Sofia"],
+    "preferred_workplaces": ["remote", "hybrid"],
+    "preferred_employment_types": ["full_time"],
+    "target_seniorities": ["mid", "senior"],
+    "relocation_ready": False,
+    "salary_expectation": 5000,
 }
 
 
-def seed(with_demo_profile: bool) -> None:
+def seed(with_demo_profile: bool, reset: bool = False) -> None:
+    if reset:
+        from app.db import Base, engine
+        from app import models  # noqa: F401
+
+        print("Dropping all tables...")
+        Base.metadata.drop_all(bind=engine)
     init_db()
     now = datetime.now(timezone.utc)
     raw = json.loads(DATA_FILE.read_text(encoding="utf-8"))
@@ -83,5 +98,6 @@ def seed(with_demo_profile: bool) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--demo-profile", action="store_true")
+    parser.add_argument("--reset", action="store_true")
     args = parser.parse_args()
-    seed(with_demo_profile=args.demo_profile)
+    seed(with_demo_profile=args.demo_profile, reset=args.reset)

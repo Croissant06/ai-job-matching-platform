@@ -1,8 +1,9 @@
 """Layered ranking funnel.
 
 Layer 1: SQL hard filters (location, seniority, workplace, salary...) — free.
-Layer 2: pgvector cosine similarity blended with rule-based feature scores
-         (skill overlap, seniority proximity) — the match score, one query.
+Layer 2: pgvector cosine similarity blended with rule-based factor scores
+         (skills, experience, location, salary, language) — the match score,
+         one indexed query plus cheap Python.
 Layer 3: LLM explanation — NOT here; generated lazily per viewed job (jobs.py).
 """
 
@@ -18,11 +19,21 @@ from app.services.embeddings import embed_text
 
 SENIORITY_ORDER = ["intern", "junior", "mid", "senior", "management"]
 
-W_SEMANTIC = 0.60
-W_SKILLS = 0.25
-W_SENIORITY = 0.15
+# Factor weights; semantic similarity carries the most signal, the rest are
+# the explainable "match factors" surfaced in the UI.
+WEIGHTS = {
+    "semantic": 0.40,
+    "skills": 0.20,
+    "experience": 0.12,
+    "location": 0.12,
+    "salary": 0.08,
+    "language": 0.08,
+}
 
 CANDIDATE_POOL = 200  # jobs pulled from layer 2 before final blend/sort
+
+# Job.language codes -> spoken-language names as the CV parser emits them.
+JOB_LANGUAGE_NAMES = {"bg": "bulgarian", "en": "english", "ro": "romanian"}
 
 
 @dataclass
@@ -32,8 +43,14 @@ class SearchFilters:
     seniorities: list[str] | None = None
     workplaces: list[str] | None = None
     employment_types: list[str] | None = None
+    languages: list[str] | None = None
     salary_min: int | None = None
+    min_score: int | None = None  # 0..100
     query: str | None = None
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "SearchFilters":
+        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
 
 def _skill_overlap(candidate_skills: list[str], job_skills: list[str]) -> float:
@@ -44,14 +61,61 @@ def _skill_overlap(candidate_skills: list[str], job_skills: list[str]) -> float:
     return len(cand & job) / len(job)
 
 
-def _seniority_score(candidate: str | None, job: str | None) -> float:
-    if not candidate or not job:
-        return 0.5  # unknown — neutral
-    try:
-        distance = abs(SENIORITY_ORDER.index(candidate) - SENIORITY_ORDER.index(job))
-    except ValueError:
+def _experience_score(profile: CandidateProfile, job: Job) -> float:
+    """Seniority proximity, considering both detected and targeted levels."""
+    if not job.seniority:
         return 0.5
-    return {0: 1.0, 1: 0.6}.get(distance, 0.15)
+    levels = set(profile.target_seniorities or [])
+    if profile.seniority:
+        levels.add(profile.seniority)
+    if not levels:
+        return 0.5
+    if job.seniority in levels:
+        return 1.0
+    try:
+        job_idx = SENIORITY_ORDER.index(job.seniority)
+        distance = min(abs(SENIORITY_ORDER.index(lv) - job_idx) for lv in levels if lv in SENIORITY_ORDER)
+    except (ValueError, TypeError):
+        return 0.5
+    return {1: 0.6}.get(distance, 0.15)
+
+
+def _location_score(profile: CandidateProfile, job: Job) -> float:
+    if job.workplace == "remote":
+        return 1.0
+    cities = {c.lower() for c in (profile.preferred_cities or [])}
+    if not cities and profile.city:
+        cities = {profile.city.lower()}
+    countries = {c.upper() for c in (profile.preferred_countries or [])}
+    if not countries and profile.country:
+        countries = {profile.country.upper()}
+    if not cities and not countries:
+        return 0.7  # no location signal — neutral
+    if job.city and job.city.lower() in cities:
+        return 1.0
+    if job.country and job.country.upper() in countries:
+        return 1.0 if profile.relocation_ready else 0.6
+    return 0.5 if profile.relocation_ready else 0.25
+
+
+def _salary_score(profile: CandidateProfile, job: Job) -> float:
+    expectation = profile.salary_expectation
+    ceiling = job.salary_max or job.salary_min
+    if not expectation or not ceiling:
+        return 0.6  # unknown on either side — neutral
+    if ceiling >= expectation:
+        return 1.0
+    return max(0.1, (ceiling / expectation) * 0.8)
+
+
+def _language_score(profile: CandidateProfile, job: Job) -> float:
+    spoken = {lang.strip().lower() for lang in (profile.languages or [])}
+    if not spoken:
+        return 0.5
+    required = JOB_LANGUAGE_NAMES.get(job.language)
+    if not required:
+        return 0.5
+    return 1.0 if required in spoken else 0.35
 
 
 def _blend_query_vector(profile_vec: list[float], query_vec: list[float]) -> list[float]:
@@ -62,14 +126,20 @@ def _blend_query_vector(profile_vec: list[float], query_vec: list[float]) -> lis
     return [v / norm for v in mixed]
 
 
-def search_jobs(
-    db: Session, profile: CandidateProfile, filters: SearchFilters, limit: int = 30
-) -> list[tuple[Job, dict]]:
-    """Returns (job, scores) sorted by blended match score. Scores are 0..1."""
-    query_vec = list(profile.embedding)
-    if filters.query:
-        query_vec = _blend_query_vector(query_vec, embed_text(filters.query, input_type="query"))
+def score_job(profile: CandidateProfile, job: Job, semantic: float) -> dict:
+    factors = {
+        "semantic": semantic,
+        "skills": _skill_overlap(profile.skills or [], job.skills or []),
+        "experience": _experience_score(profile, job),
+        "location": _location_score(profile, job),
+        "salary": _salary_score(profile, job),
+        "language": _language_score(profile, job),
+    }
+    factors["score"] = sum(WEIGHTS[name] * value for name, value in factors.items() if name in WEIGHTS)
+    return factors
 
+
+def base_job_query(filters: SearchFilters):
     now = datetime.now(timezone.utc)
     stmt = select(Job).where(Job.is_active.is_(True))
     stmt = stmt.where((Job.expires_at.is_(None)) | (Job.expires_at > now))
@@ -85,9 +155,23 @@ def search_jobs(
         stmt = stmt.where(Job.workplace.in_(filters.workplaces))
     if filters.employment_types:
         stmt = stmt.where(Job.employment_type.in_(filters.employment_types))
+    if filters.languages:
+        stmt = stmt.where(Job.language.in_(filters.languages))
     if filters.salary_min:
         # Per spec: salary filter applies only when the ad has salary info.
         stmt = stmt.where(Job.salary_max >= filters.salary_min)
+    return stmt
+
+
+def search_jobs(
+    db: Session, profile: CandidateProfile, filters: SearchFilters, limit: int = 30
+) -> list[tuple[Job, dict]]:
+    """Returns (job, factors) sorted by blended match score. Factor values are 0..1."""
+    query_vec = list(profile.embedding)
+    if filters.query:
+        query_vec = _blend_query_vector(query_vec, embed_text(filters.query, input_type="query"))
+
+    stmt = base_job_query(filters)
 
     hidden = select(FeedbackEvent.job_id).where(
         FeedbackEvent.profile_id == profile.id, FeedbackEvent.event_type == "hide"
@@ -102,15 +186,35 @@ def search_jobs(
     results = []
     for job, dist in rows:
         semantic = max(0.0, min(1.0, 1.0 - float(dist)))  # cosine similarity clamped to 0..1
-        skills = _skill_overlap(profile.skills or [], job.skills or [])
-        seniority = _seniority_score(profile.seniority, job.seniority)
-        score = W_SEMANTIC * semantic + W_SKILLS * skills + W_SENIORITY * seniority
-        results.append(
-            (job, {"score": score, "semantic": semantic, "skills": skills, "seniority": seniority})
-        )
+        factors = score_job(profile, job, semantic)
+        if filters.min_score and factors["score"] * 100 < filters.min_score:
+            continue
+        results.append((job, factors))
 
     results.sort(key=lambda r: r[1]["score"], reverse=True)
     return results[:limit]
+
+
+def score_single_job(db: Session, profile: CandidateProfile, job: Job) -> dict:
+    dist = db.execute(
+        select(Job.embedding.cosine_distance(list(profile.embedding))).where(Job.id == job.id)
+    ).scalar_one()
+    semantic = max(0.0, min(1.0, 1.0 - float(dist)))
+    return score_job(profile, job, semantic)
+
+
+def similar_jobs(db: Session, job: Job, limit: int = 4) -> list[Job]:
+    now = datetime.now(timezone.utc)
+    distance = Job.embedding.cosine_distance(list(job.embedding))
+    return list(
+        db.execute(
+            select(Job)
+            .where(Job.id != job.id, Job.is_active.is_(True))
+            .where((Job.expires_at.is_(None)) | (Job.expires_at > now))
+            .order_by(distance)
+            .limit(limit)
+        ).scalars()
+    )
 
 
 def profile_summary_for_llm(profile: CandidateProfile) -> str:

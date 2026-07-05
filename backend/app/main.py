@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.db import init_db
-from app.routers import feedback, jobs, profile
+from app.routers import dashboard, feedback, jobs, profile, searches
 
 
 @asynccontextmanager
@@ -27,6 +27,8 @@ app.include_router(profile.router)
 app.include_router(jobs.router)
 app.include_router(jobs.meta_router)
 app.include_router(feedback.router)
+app.include_router(searches.router)
+app.include_router(dashboard.router)
 
 
 @app.get("/api/health")

@@ -19,6 +19,50 @@ def get_current_profile(db: Session) -> CandidateProfile | None:
     ).scalars().first()
 
 
+def compute_strength(profile: CandidateProfile) -> tuple[int, list[str]]:
+    """Completeness score + i18n suggestion keys, shown on the profile page and dashboard."""
+    score = 0
+    suggestions: list[str] = []
+
+    score += 10 if profile.full_name else 0
+    score += 10 if profile.city else 0
+    score += 10 if profile.seniority else 0
+    score += 5 if profile.years_experience is not None else 0
+    score += 10 if profile.roles else 0
+    score += 10 if profile.languages else 0
+
+    skills = len(profile.skills or [])
+    score += 15 if skills >= 5 else (8 if skills else 0)
+    if skills < 5:
+        suggestions.append("addSkills")
+
+    if profile.summary:
+        score += 10
+    else:
+        suggestions.append("addSummary")
+
+    if profile.preferred_workplaces:
+        score += 10
+    else:
+        suggestions.append("addWorkTypes")
+
+    if profile.salary_expectation:
+        score += 10
+    else:
+        suggestions.append("addSalary")
+
+    if not profile.preferred_cities:
+        suggestions.append("addCities")
+
+    return score, suggestions
+
+
+def profile_to_out(profile: CandidateProfile) -> ProfileOut:
+    out = ProfileOut.model_validate(profile)
+    out.strength, out.suggestions = compute_strength(profile)
+    return out
+
+
 def _reembed(profile: CandidateProfile) -> None:
     profile.embedding = embed_text(
         profile_embedding_text(
@@ -32,7 +76,7 @@ def read_profile(db: Session = Depends(get_db)):
     profile = get_current_profile(db)
     if not profile:
         raise HTTPException(status_code=404, detail="No profile yet — upload a CV")
-    return profile
+    return profile_to_out(profile)
 
 
 @router.post("/cv", response_model=ProfileOut)
@@ -63,7 +107,7 @@ def upload_cv(file: UploadFile, db: Session = Depends(get_db)):
     db.add(profile)
     db.commit()
     db.refresh(profile)
-    return profile
+    return profile_to_out(profile)
 
 
 @router.put("", response_model=ProfileOut)
@@ -79,4 +123,4 @@ def update_profile(update: ProfileUpdate, db: Session = Depends(get_db)):
 
     db.commit()
     db.refresh(profile)
-    return profile
+    return profile_to_out(profile)

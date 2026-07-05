@@ -74,11 +74,36 @@ class CandidateProfile(Base):
     languages: Mapped[list] = mapped_column(JSONB, default=list)
     summary: Mapped[str | None] = mapped_column(Text)
 
+    # Explicit search preferences (onboarding goal chips + profile page edits).
+    preferred_countries: Mapped[list] = mapped_column(JSONB, default=list)
+    preferred_cities: Mapped[list] = mapped_column(JSONB, default=list)
+    preferred_workplaces: Mapped[list] = mapped_column(JSONB, default=list)
+    preferred_employment_types: Mapped[list] = mapped_column(JSONB, default=list)
+    target_seniorities: Mapped[list] = mapped_column(JSONB, default=list)
+    relocation_ready: Mapped[bool] = mapped_column(Boolean, default=False)
+    salary_expectation: Mapped[int | None] = mapped_column(Integer)  # monthly, local currency
+
     cv_text: Mapped[str | None] = mapped_column(Text)
     embedding: Mapped[list] = mapped_column(Vector(EMBED_DIM))
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
+
+
+class SavedSearch(Base):
+    """A reusable set of search filters ("relocation-ready" vs "only Ruse").
+    `last_checked_at` drives the new-matches counter; `alerts_enabled` is stored
+    now and consumed once email delivery exists."""
+
+    __tablename__ = "saved_searches"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    profile_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("candidate_profiles.id", ondelete="CASCADE"))
+    name: Mapped[str] = mapped_column(String(200))
+    filters: Mapped[dict] = mapped_column(JSONB, default=dict)
+    alerts_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    last_checked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
 class JobExplanation(Base):
