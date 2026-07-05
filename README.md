@@ -12,6 +12,35 @@ Routes: `/{en|bg}` landing · `/{locale}/onboarding` · `/{locale}/app` dashboar
 - **AI:** Claude (CV parsing, explanations) + Voyage multilingual embeddings — with an offline `mock` embedding mode so everything runs without API keys
 - **Frontend:** Next.js + Tailwind, lightweight i18n (EN + BG; RO is just another messages file later)
 
+## Day-to-day: starting the app
+
+After the one-time setup below, this is all you need each time:
+
+```powershell
+# 0. Make sure Docker Desktop is running (the database starts itself).
+
+# 1. Backend — first PowerShell window (leave it running):
+cd D:\JobMatchAI\backend
+.venv\Scripts\uvicorn app.main:app --port 8000
+
+# 2. Frontend — second PowerShell window (leave it running):
+cd D:\JobMatchAI\frontend
+npm run dev
+
+# 3. Open http://localhost:3000 in the browser.
+
+# Optional — collect fresh job ads (safe to re-run any time):
+cd D:\JobMatchAI\backend
+.venv\Scripts\python -m scripts.ingest
+```
+
+To stop: press `Ctrl+C` in both windows (or just close them).
+
+**Troubleshooting**
+- App stuck on the loading spinner → database is down: `docker compose up -d` from `D:\JobMatchAI`.
+- "Port 3000 is in use" → an old frontend window is still open; close it (or `Get-NetTCPConnection -LocalPort 3000 -State Listen` shows the PID to stop).
+- After pulling new code → `.venv\Scripts\pip install -r requirements.txt` (backend) and `npm install` (frontend) pick up new dependencies; if the database structure changed, the PR notes will say to run `scripts.seed_jobs --reset`.
+
 ## Quick start
 
 ```powershell

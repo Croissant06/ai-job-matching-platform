@@ -2,6 +2,7 @@ services:
   db:
     image: pgvector/pgvector:pg16
     container_name: jobmatch-db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: jobmatch
       POSTGRES_PASSWORD: jobmatch
