@@ -149,6 +149,21 @@ def parse_salary(text: str | None) -> tuple[int | None, int | None, str | None]:
     return None, None, None
 
 
+# Units of currency per 1 EUR. BGN is the fixed statutory rate; others are
+# approximations refreshed manually (good enough for filtering/ranking — the
+# original amount + currency are always kept for display).
+EUR_RATES = {"EUR": 1.0, "BGN": 1.95583, "RON": 4.97, "GBP": 0.855}
+
+
+def to_eur(amount: int | None, currency: str | None) -> int | None:
+    if amount is None:
+        return None
+    rate = EUR_RATES.get((currency or "").upper())
+    if not rate:
+        return None  # unknown currency — better no value than a wrong one
+    return round(amount / rate)
+
+
 # --- Fingerprint ----------------------------------------------------------------
 def content_hash(company: str, title: str, city: str | None) -> str:
     def clean(s: str) -> str:
@@ -187,6 +202,8 @@ def normalize(raw: RawJob) -> dict:
         "salary_min": salary_min,
         "salary_max": salary_max,
         "salary_currency": currency,
+        "salary_min_eur": to_eur(salary_min, currency),
+        "salary_max_eur": to_eur(salary_max, currency),
         "skills": [t.strip().lower() for t in raw.tags if t.strip()][:15],
         "posted_at": raw.posted_at or now,
         "expires_at": now + timedelta(days=30),

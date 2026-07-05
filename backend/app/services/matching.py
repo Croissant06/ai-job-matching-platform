@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.ingestion.normalize import to_eur
 from app.models import CandidateProfile, FeedbackEvent, Job
 from app.services.embeddings import embed_text
 
@@ -99,8 +100,10 @@ def _location_score(profile: CandidateProfile, job: Job) -> float:
 
 
 def _salary_score(profile: CandidateProfile, job: Job) -> float:
-    expectation = profile.salary_expectation
-    ceiling = job.salary_max or job.salary_min
+    # Compare in EUR — a 2000 GBP job and a 2000 BGN expectation are not equal.
+    # Profile expectations are entered in BGN (primary market).
+    expectation = to_eur(profile.salary_expectation, "BGN")
+    ceiling = job.salary_max_eur or job.salary_min_eur
     if not expectation or not ceiling:
         return 0.6  # unknown on either side — neutral
     if ceiling >= expectation:
@@ -159,7 +162,8 @@ def base_job_query(filters: SearchFilters):
         stmt = stmt.where(Job.language.in_(filters.languages))
     if filters.salary_min:
         # Per spec: salary filter applies only when the ad has salary info.
-        stmt = stmt.where(Job.salary_max >= filters.salary_min)
+        # User input is BGN; comparison happens on the EUR-normalized column.
+        stmt = stmt.where(Job.salary_max_eur >= to_eur(filters.salary_min, "BGN"))
     return stmt
 
 

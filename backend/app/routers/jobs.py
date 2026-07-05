@@ -2,6 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -126,7 +127,11 @@ def explanation(job_id: uuid.UUID, locale: str = "en", db: Session = Depends(get
             missing_skills=result["missing_skills"],
         )
     )
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # A concurrent request cached the same explanation first — use theirs.
+        db.rollback()
     return ExplanationOut(**result, cached=False)
 
 

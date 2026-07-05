@@ -12,6 +12,7 @@ import httpx
 
 from app.config import get_settings
 from app.ingestion.base import RawJob
+from app.ingestion.http import get_with_retry
 
 PAGE_SIZE = 50
 
@@ -33,7 +34,8 @@ class AdzunaConnector:
                 yielded = 0
                 page = 1
                 while yielded < per_country:
-                    resp = client.get(
+                    resp = get_with_retry(
+                        client,
                         f"https://api.adzuna.com/v1/api/jobs/{country}/search/{page}",
                         params={
                             "app_id": s.adzuna_app_id,
@@ -42,7 +44,6 @@ class AdzunaConnector:
                             "content-type": "application/json",
                         },
                     )
-                    resp.raise_for_status()
                     results = resp.json().get("results", [])
                     if not results:
                         break

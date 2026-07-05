@@ -99,7 +99,7 @@ export default function UploadCard({
           </>
         )}
       </button>
-      <p className="mt-3 text-center text-xs text-slate-400">{t("onboarding.extractNote")}</p>
+      <p className="mt-3 text-center text-xs text-slate-500">{t("onboarding.extractNote")}</p>
       {error && <p className="mt-3 text-center text-sm text-red-600">{error}</p>}
     </div>
   );

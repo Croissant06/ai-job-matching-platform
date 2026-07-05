@@ -35,7 +35,7 @@ export default function JobCard({
           <p className="mt-0.5 truncate text-sm text-slate-500">
             {job.company} · {jobMeta(t, job)}
           </p>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
             {salary && <span className="font-medium text-emerald-700">{salary}</span>}
             <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-medium">
               {t("results.source")}: {job.source}
@@ -62,7 +62,7 @@ export default function JobCard({
             <SkillChips skills={gaps} tone="gap" />
           </>
         ) : (
-          <span className="text-xs text-slate-400">{t("results.noGapData")}</span>
+          <span className="text-xs text-slate-500">{t("results.noGapData")}</span>
         )}
       </div>
 

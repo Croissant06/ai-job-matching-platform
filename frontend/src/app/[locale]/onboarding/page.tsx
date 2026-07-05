@@ -85,7 +85,7 @@ export default function OnboardingPage() {
             >
               {i + 1}
             </span>
-            <span className={`text-xs font-medium ${i <= step ? "text-slate-800" : "text-slate-400"}`}>
+            <span className={`text-xs font-medium ${i <= step ? "text-slate-800" : "text-slate-500"}`}>
               {t(`onboarding.steps.${i}`)}
             </span>
             {i < steps.length - 1 && <span className="h-px flex-1 bg-slate-200" />}
@@ -126,7 +126,7 @@ export default function OnboardingPage() {
               onChange={(v) => setRelocation(v.includes("yes"))}
             />
             <div>
-              <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-400">
+              <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
                 {t("onboarding.salaryLabel")}
               </p>
               <input

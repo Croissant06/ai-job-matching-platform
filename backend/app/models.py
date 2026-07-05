@@ -42,6 +42,10 @@ class Job(Base):
     salary_min: Mapped[int | None] = mapped_column(Integer)
     salary_max: Mapped[int | None] = mapped_column(Integer)
     salary_currency: Mapped[str | None] = mapped_column(String(5))
+    # EUR-normalized copies so filters/scoring compare like with like across
+    # BGN/GBP/RON sources (raw values above stay for display).
+    salary_min_eur: Mapped[int | None] = mapped_column(Integer)
+    salary_max_eur: Mapped[int | None] = mapped_column(Integer)
 
     skills: Mapped[list] = mapped_column(JSONB, default=list)
 

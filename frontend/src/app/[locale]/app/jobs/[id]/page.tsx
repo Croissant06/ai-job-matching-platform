@@ -86,7 +86,7 @@ export default function JobDetailPage() {
                   {t("job.salary")}: {salary}
                 </span>
               )}
-              <span className="text-slate-400">
+              <span className="text-slate-500">
                 {t("job.posted")}: {new Date(job.posted_at).toLocaleDateString(locale)}
               </span>
               <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-500">
@@ -96,7 +96,7 @@ export default function JobDetailPage() {
           </Card>
 
           <Card className="p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
               {t("job.description")}
             </h2>
             <p className="mt-3 whitespace-pre-line leading-relaxed text-slate-700">
@@ -104,7 +104,7 @@ export default function JobDetailPage() {
             </p>
             {job.skills.length > 0 && (
               <>
-                <h2 className="mt-6 text-sm font-semibold uppercase tracking-wide text-slate-400">
+                <h2 className="mt-6 text-sm font-semibold uppercase tracking-wide text-slate-500">
                   {t("job.requiredSkills")}
                 </h2>
                 <div className="mt-2">
@@ -146,13 +146,13 @@ export default function JobDetailPage() {
                       <div className="mt-1.5">
                         <SkillChips skills={explanation.missing_skills} tone="gap" />
                       </div>
-                      <p className="mt-2 text-xs text-slate-400">{t("job.gapPositive")}</p>
+                      <p className="mt-2 text-xs text-slate-500">{t("job.gapPositive")}</p>
                     </>
                   ) : (
                     <p className="mt-1 text-sm text-slate-500">{t("job.noGaps")}</p>
                   )
                 ) : (
-                  <p className="mt-1 text-sm text-slate-400">…</p>
+                  <p className="mt-1 text-sm text-slate-500">…</p>
                 )}
               </div>
 
@@ -195,7 +195,7 @@ export default function JobDetailPage() {
 
           {similar.length > 0 && (
             <Card className="p-5">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 {t("job.similar")}
               </h3>
               <div className="mt-2 divide-y divide-slate-100">

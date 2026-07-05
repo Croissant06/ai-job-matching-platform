@@ -14,6 +14,7 @@ import httpx
 
 from app.config import get_settings
 from app.ingestion.base import RawJob
+from app.ingestion.http import post_with_retry, safe_external_id
 
 _TAG_RE = re.compile(r"<[^>]+>")
 
@@ -34,11 +35,11 @@ class JoobleConnector:
                 yielded = 0
                 page = 1
                 while yielded < per_country:
-                    resp = client.post(
+                    resp = post_with_retry(
+                        client,
                         f"https://{country}.jooble.org/api/{s.jooble_api_key}",
                         json={"keywords": "", "location": "", "page": str(page)},
                     )
-                    resp.raise_for_status()
                     jobs = resp.json().get("jobs", [])
                     if not jobs:
                         break
@@ -51,7 +52,7 @@ class JoobleConnector:
                                 pass
                         yield RawJob(
                             source=self.name,
-                            external_id=str(item.get("id", item.get("link", ""))),
+                            external_id=safe_external_id(str(item.get("id") or item.get("link", ""))),
                             url=item.get("link", ""),
                             title=_TAG_RE.sub("", item.get("title", "")),
                             company=item.get("company", ""),
